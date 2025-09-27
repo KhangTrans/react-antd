@@ -8,6 +8,7 @@ import {
   DashboardOutlined,
 } from '@ant-design/icons';
 import { Link, useLocation } from 'react-router-dom';
+import { canViewDashboard, canManageUsers, canManageRoles, canManageProducts } from '../../services/auth';
 
 export default function Sidebar() {
   // theme: 'dark' | 'light'
@@ -21,7 +22,8 @@ export default function Sidebar() {
     if (pathname === '/dashboard/customers') return '3';
     if (pathname === '/dashboard/reports') return '4';
     if (pathname === '/products') return '5';
-    if (pathname === '/inventory') return '6';
+    if (pathname === '/products/categories') return '6';
+    if (pathname === '/inventory') return '13';
     if (pathname === '/promo/campaigns') return '7';
     if (pathname === '/promo/coupons') return '8';
     if (pathname === '/settings') return '9';
@@ -32,48 +34,77 @@ export default function Sidebar() {
   }, [pathname]);
 
   const items = useMemo(
-    () => [
-      {
-        key: 'sub1',
-        label: 'Bảng điều khiển',
-        icon: <DashboardOutlined />,
-        children: [
-          { key: '1', label: <Link to="/dashboard">Tổng quan</Link> },
-          { key: '2', label: <Link to="/dashboard/orders">Đơn hàng</Link> },
-          { key: '3', label: <Link to="/dashboard/customers">Khách hàng</Link> },
-          { key: '4', label: <Link to="/dashboard/reports">Báo cáo</Link> },
-        ],
-      },
-      {
-        key: 'sub2',
-        label: 'Sản phẩm',
-        icon: <AppstoreOutlined />,
-        children: [
-          { key: '5', label: <Link to="/products">Danh sách sản phẩm</Link> },
-          { key: '6', label: <Link to="/inventory">Quản lý kho</Link> },
-        ],
-      },
-      {
-        key: 'sub3',
-        label: 'Khuyến mãi',
-        icon: <MailOutlined />,
-        children: [
-          { key: '7', label: <Link to="/promo/campaigns">Chiến dịch</Link> },
-          { key: '8', label: <Link to="/promo/coupons">Mã giảm giá</Link> },
-        ],
-      },
-      {
-        key: 'sub4',
-        label: 'Cài đặt',
-        icon: <SettingOutlined />,
-        children: [
-          { key: '9', label: <Link to="/settings">Cài đặt hệ thống</Link> },
-          { key: '10', label: <Link to="/settings/profile">Thông tin cá nhân</Link> },
-          { key: '11', label: <Link to="/settings/users">Quản lý người dùng</Link> },
-          { key: '12', label: <Link to="/settings/roles">Quản lý vai trò</Link> },
-        ],
-      },
-    ],
+    () => {
+      const menuItems = [];
+
+      // Dashboard - chỉ ADMIN và MANAGER
+      if (canViewDashboard()) {
+        menuItems.push({
+          key: 'sub1',
+          label: 'Bảng điều khiển',
+          icon: <DashboardOutlined />,
+          children: [
+            { key: '1', label: <Link to="/dashboard">Tổng quan</Link> },
+            { key: '2', label: <Link to="/dashboard/orders">Đơn hàng</Link> },
+            { key: '3', label: <Link to="/dashboard/customers">Khách hàng</Link> },
+            { key: '4', label: <Link to="/dashboard/reports">Báo cáo</Link> },
+          ],
+        });
+      }
+
+      // Sản phẩm - MANAGER có thể xem, ADMIN có thể quản lý
+      if (canManageProducts()) {
+        menuItems.push({
+          key: 'sub2',
+          label: 'Sản phẩm',
+          icon: <AppstoreOutlined />,
+          children: [
+            { key: '5', label: <Link to="/products">Danh sách sản phẩm</Link> },
+            { key: '6', label: <Link to="/products/categories">Danh mục sản phẩm</Link> },
+            { key: '13', label: <Link to="/inventory">Quản lý kho</Link> },
+          ],
+        });
+      }
+
+      // Khuyến mãi - chỉ ADMIN
+      if (canManageUsers()) {
+        menuItems.push({
+          key: 'sub3',
+          label: 'Khuyến mãi',
+          icon: <MailOutlined />,
+          children: [
+            { key: '7', label: <Link to="/promo/campaigns">Chiến dịch</Link> },
+            { key: '8', label: <Link to="/promo/coupons">Mã giảm giá</Link> },
+          ],
+        });
+      }
+
+      // Cài đặt - phân quyền chi tiết
+      const settingsChildren = [
+        { key: '9', label: <Link to="/settings">Cài đặt hệ thống</Link> },
+        { key: '10', label: <Link to="/settings/profile">Thông tin cá nhân</Link> },
+      ];
+
+      // Chỉ ADMIN mới thấy quản lý users và roles
+      if (canManageUsers()) {
+        settingsChildren.push({ key: '11', label: <Link to="/settings/users">Quản lý người dùng</Link> });
+      }
+      
+      if (canManageRoles()) {
+        settingsChildren.push({ key: '12', label: <Link to="/settings/roles">Quản lý vai trò</Link> });
+      }
+
+      if (settingsChildren.length > 2) { // Có ít nhất 1 menu admin
+        menuItems.push({
+          key: 'sub4',
+          label: 'Cài đặt',
+          icon: <SettingOutlined />,
+          children: settingsChildren,
+        });
+      }
+
+      return menuItems;
+    },
     []
   );
 

@@ -14,8 +14,10 @@ import SettingsPage from './pages/SettingsPage'
 import ProfilePage from './pages/ProfilePage'
 import UsersPage from './pages/UsersPage'
 import RolesPage from './pages/RolesPage'
+import CategoriesPage from './pages/CategoriesPage'
 import ProtectedRoute from './routes/ProtectedRoute'
 import { isAuthenticated } from './services/auth'
+import UnauthorizedPage from './pages/UnauthorizedPage'
 
 function AuthShell({ children }) {
   return (
@@ -70,7 +72,7 @@ function App() {
       <Route
         path="/products"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredPermission="viewProducts">
             <ProductsPage />
           </ProtectedRoute>
         }
@@ -122,7 +124,7 @@ function App() {
       <Route
         path="/settings/users"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredPermission="manageUsers">
             <UsersPage />
           </ProtectedRoute>
         }
@@ -130,12 +132,21 @@ function App() {
       <Route
         path="/settings/roles"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredPermission="manageRoles">
             <RolesPage />
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/products/categories"
+        element={
+          <ProtectedRoute>
+            <CategoriesPage />
+          </ProtectedRoute>
+        }
+      />
       
+      <Route path="/unauthorized" element={<UnauthorizedPage />} />
       <Route path="/" element={<Navigate to={isAuthenticated() ? '/dashboard' : '/login'} replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

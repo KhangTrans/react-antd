@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Card, Space, Form, Input, Checkbox, Button, Avatar, Typography, Divider, message } from 'antd'
 import { UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons'
-import { signIn } from '../../services/auth'
+import { signIn, getUserRoles, signOut } from '../../services/auth'
 
 export default function LoginForm({ onSuccess, switchToRegister }) {
   const [form] = Form.useForm()
@@ -10,13 +10,20 @@ export default function LoginForm({ onSuccess, switchToRegister }) {
   const onFinish = async (values) => {
     try {
       setLoading(true)
-      const ok = signIn(values)
-      if (ok) {
-        message.success('Đăng nhập thành công')
-        onSuccess?.()
-      } else {
-        message.error('Thông tin đăng nhập không hợp lệ')
+      await signIn(values)
+      // after sign in, check roles: only ROLE_ADMIN and ROLE_MANAGER allowed
+      const roles = getUserRoles()
+      const allowed = roles.some(r => r === 'ROLE_ADMIN' || r === 'ROLE_MANAGER')
+      if (!allowed) {
+        // logout and show message
+        signOut()
+        message.error('Bạn không có quyền truy cập trang quản trị')
+        return
       }
+      message.success('Đăng nhập thành công')
+      onSuccess?.()
+    } catch (e) {
+      message.error(e?.message || 'Thông tin đăng nhập không hợp lệ')
     } finally { setLoading(false) }
   }
 

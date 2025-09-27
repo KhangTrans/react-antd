@@ -10,13 +10,11 @@ export default function RegisterForm({ onSuccess, switchToLogin }) {
   const onFinish = async (values) => {
     try {
       setLoading(true)
-      const ok = signUp(values)
-      if (ok) {
-        message.success('Tạo tài khoản thành công')
-        onSuccess?.()
-      } else {
-        message.error('Đăng ký thất bại, vui lòng thử lại')
-      }
+      await signUp(values)
+      message.success('Tạo tài khoản thành công')
+      onSuccess?.()
+    } catch (e) {
+      message.error(e?.message || 'Đăng ký thất bại, vui lòng thử lại')
     } finally { setLoading(false) }
   }
 
